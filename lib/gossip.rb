@@ -31,8 +31,13 @@ every(3.seconds) do
   STATE.dup.each_key do |peer_port|
     next if peer_port == PORT
     puts "Gossiping with #{peer_port}.... gossip gossip."
-    their_state = Client.gossip(peer_port, JSON.dump(STATE)) # this will grab the state of a peer network, specifically the state of the PEER_PORT VARIABLE
-    update_state(JSON.parse(their_state)) # this will then update the state so it shows their connected state
+    begin
+      their_state = Client.gossip(peer_port, JSON.dump(STATE)) # this will grab the state of a peer network, specifically the state of the PEER_PORT VARIABLE
+      update_state(JSON.parse(their_state)) # this will then update the state so it shows their connected state
+    rescue Faraday::ConnectionFailed => e # create a rescue just in case a client quits
+      puts e
+      STATE.delete(peer_port) # delete that peer_ports state if not found
+    end
   end
   render_state # we then render the newly updated state.
 end
