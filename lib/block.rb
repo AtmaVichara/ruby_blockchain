@@ -8,7 +8,7 @@ class Block
 
   def initialize(previous_block, msg)
     @msg = msg
-    @previous_block_hash = previous_block.block_hash if !previous_block.nil?
+    @previous_block_hash = previous_block.block_hash if previous_block
     mine_block!
   end
 
@@ -18,7 +18,22 @@ class Block
 
   def mine_block!
     @nonce = find_nonce
-    @block_hash = hash(@nonce)
+    @block_hash = hash(block_contents + @nonce)
+  end
+
+  def to_s
+    [
+      "",
+      "-" * 80,
+      "Previous hash: ".rjust(15) + @previous_block_hash.to_s.yellow,
+      "Message: ".rjust(15) + @msg.green,
+      "Nonce: ".rjust(15) + @nonce.red,
+      "Own hash: ".rjust(15) + @block_hash.yellow,
+      "-" * 80,
+      "|".rjust(40),
+      "|".rjust(40),
+      "↓".rjust(40),
+    ].join("\n")
   end
 
   private
@@ -57,7 +72,7 @@ class BlockChain
 
   def add_to_chain(msg)
     @blocks << Block.new(@blocks.last, msg)
-    puts @blocks.last
+    puts @blocks.last.to_s
   end
 
   def valid?
