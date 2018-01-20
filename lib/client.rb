@@ -10,9 +10,9 @@ def create_user(name)
 end
 
 def get_balance(user)
-  Faraday.post("#{URL}:#{PORT}/users", user: user).body
+  Faraday.get("#{URL}:#{PORT}/balance", user: user).body
 end
 
 def transfer(from, to, amount)
-  Faraday.post("#{URL}:#{PORT}/users", from: from, to: to, amount: amount).body
+  Faraday.post("#{URL}:#{PORT}/transfers", from: from, to: to, amount: amount).body
 end
