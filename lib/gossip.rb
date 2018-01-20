@@ -2,7 +2,7 @@ require 'sinatra'
 require 'colorize'
 require 'active_support/time'
 require_relative '../test/coin_test'
-require_relative '../lib/coin'
+require_relative '../lib/helpers'
 
 PORT, PEER_PORT = ARGV.first(2)
 set :port, PORT
