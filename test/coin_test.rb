@@ -1,4 +1,4 @@
-require_relative "coin"
+require_relative "../lib/coin"
 require 'faraday'
 
 
