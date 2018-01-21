@@ -1,38 +1,58 @@
 require 'colorize'
 require 'sinatra'
+require 'yaml'
+require_relative '../lib/block'
+require_relative '../lib/client'
+require_relative '../lib/helpers'
+require_relative '../lib/pki'
 
-BALANCES = {
-  'joe' => 1_000_000,
-}
+PORT, PEER_PORT = ARGV.first(2)
+set :port, PORT
 
-def print_balance
-  puts BALANCES.to_s.yellow
+$PEERS = ThreadSafe::Array.new([PORT]) # peers are not apart of state. Peers are apart of the network, not the blockchain.
+                                       # Peers instead use pub_key to communicate with blockchain
+
+PRIV_KEY, PUB_KEY = PKI.generate_key_pair
+
+if PEER_PORT.nil?
+  # you are the progenitor
+  $BLOCKCHAIN = BlockChain.new(PUB_KEY, PRIV_KEY) # creating first chain in the blockchain
+else
+  # you are joining the network
+  $PEERS << PEER_PORT # peer port is shuttled into the thread, which is an array of other peers
 end
 
-# @param user
-get "/balance" do
-  user = params['user'].downcase
-  print_balance
-  "#{user} has #{BALANCES[user]}"
+every(3.seconds) do
+  $PEERS.dup.each do |port|
+    next if port == PORT # skipping over our own port
+
+    puts "Gossiping between peers in the blockchain."
+    puts "PEERS: #{port.to_s.cyan}"
+    gossip_with_peer(port)
+  end
+  render_state
 end
 
-# @param name
-post "/users" do
-  name = params['name'].downcase
-  BALANCES[name] ||= 0
-  print_balance
-  "OK"
+# @params blockchain
+# @params peers
+
+post '/gossip' do # recieve peers gossip, and return your gossip with their gossip to other peers
+  their_blockchain = YAML.load(params['blockchain'])
+  their_peers = YAML.load(params['peers'])
+  update_blockchain(their_blockchain)
+  update_peers(their_peers)
+  YAML.dump('peers' => $PEERS, 'blockchain' = $BLOCKCHAIN)
 end
 
-# @param from
-# @param to
-# @param amount
-post "/transfers" do
-  from, to = params.values_at('from', 'to').map(&:downcase)
+# @params to (port_number)
+# @params amount
+post '/send_money' do
+  to = Client.get_pub_key(params['to'])
   amount = params['amount'].to_i
-  raise unless BALANCES[from] >= amount
-  BALANCES[from] -= amount
-  BALANCES[to] += amount
-  print_balance
-  'OK'
+  $BLOCKCHAIN.add_to_chain(Transaction.new(PUB_KEY, to, amount, PRIV_KEY))
+  'OK BLOCK IS MINED!!!! XD'.green
+end
+
+get '/pub_key' do
+  PUB_KEY
 end

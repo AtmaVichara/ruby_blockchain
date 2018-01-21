@@ -9,6 +9,10 @@ def every(seconds)
   end
 end
 
+HUMAN_READABLE_NAMES = File.readlines("./data/names.txt").map(&:chomp)
+
+
+
 def render_state
   puts "-" * 40
   STATE.to_a.sort_by(&:first).each do |port, (movie, version_number)| # grabbing the state, turning into array, then sorting by port, and iterating over it

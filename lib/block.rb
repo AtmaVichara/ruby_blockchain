@@ -7,16 +7,16 @@ class Block
 
   attr_reader :transaction, :previous_block_hash, :block_hash
 
-  def initialize(previous_block, transaction)
-    raise TypeError unless transaction.is_a?(Transacation)
-    @transaction = transaction
-    @previous_block_hash = previous_block.block_hash if previous_block
-    mine_block!
+  def self.create_genesis_block(pub_key, priv_key)
+    genesis_txn = Transaction.new(nil, pub_key, 500_000, priv_key) # with genesis block, creating first transaction for user
+    Block.new(nil, genesis_txn) # creating block from genesis block
   end
 
-  def self.create_genesis_block(pub_key, priv_key)
-    genesis_txn = Transaction.new(nil, pub_key, 500_000, priv_key)
-    Block.new(nil, genesis_txn)
+  def initialize(previous_block, transaction)
+    raise TypeError unless transaction.is_a?(Transacation) # edgecase to determine that a transaction is a class of Transaction
+    @transaction = transaction
+    @previous_block_hash = previous_block.block_hash if previous_block
+    mine_block! # upon initialization, mine the blocks
   end
 
   def mine_block!
@@ -60,15 +60,15 @@ class Transaction
   attr_reader :from, :to, :amount
 
   def initialize(from, to, amount, priv_key)
-    @from = from
-    @to = to
+    @from = from # is a public key
+    @to = to     # is a public key
     @amount = amount
-    @signature = PKI.sign(message, priv_key)
+    @signature = PKI.sign(message, priv_key) # provide the signature to verify that you are who you are with your private key
   end
 
   def is_valid_signature?
     return true if genesis_transaction? # genesis_transaction is always true
-    PKI.valid_signature?(message, @signature, from)
+    PKI.valid_signature?(message, @signature, from) # checking to see if key's match with signature's keys with message keys, and finally the from public key
   end
 
   def genesis_transaction?
@@ -76,7 +76,7 @@ class Transaction
   end
 
   def message
-    Digest::SHA256.hexdigest([@from, @to, @amount].join)
+    Digest::SHA256.hexdigest([@from, @to, @amount].join) # the message is the transaction data, and must be joined to keep data as small as possible for encryption since it is slow
   end
 
   def to_s
@@ -105,7 +105,7 @@ class BlockChain
     @blocks.all? { |block| block.is_a?(Block) } &&
       @blocks.all?(&:valid?) &&
       @blocks.each_cons(2).all? { |a, b| a.block_hash == b.previous_block_hash } &&
-      all_spends_valid?
+      all_spends_valid? # our blockchain is an application, so you cannot spend past zero, cannot go into red
   end
 
   def all_spends_valid?
