@@ -1,6 +1,8 @@
 require 'colorize'
 require 'digest'
-require_relative 'pki'
+require_relative '../lib/pki'
+require_relative '../lib/transaction'
+require_relative '../lib/blockchain'
 
 class Block
   NUM_ZEROES = 5 # number of zeroes that trail hash to represent valid nonce
