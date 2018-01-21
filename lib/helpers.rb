@@ -1,3 +1,5 @@
+require 'digest'
+
 Thread.abort_on_exception = true # thread will abort on exception
 
 def every(seconds)
@@ -11,24 +13,49 @@ end
 
 HUMAN_READABLE_NAMES = File.readlines("./data/names.txt").map(&:chomp)
 
-
-
-def render_state
-  puts "-" * 40
-  STATE.to_a.sort_by(&:first).each do |port, (movie, version_number)| # grabbing the state, turning into array, then sorting by port, and iterating over it
-    puts "#{port.to_s.green} currently likes #{movie.yellow}"
-  end
-  puts "-" * 40
+def human_readable_names(pub_key)
+  pk_hash = Digest::SHA256.hexdigest(pub_key).to_i(16)
+  HUMAN_READABLE_NAMES[pk_hash % HUMAN_READABLE_NAMES.length]
 end
 
-def update_state(update)
-  update.each do |port, (movie, version_number)| #iterating over the each port unless nil
-    next if port.nil?
+def readable_balances
+  returns "" if $BLOCKCHAIN.nil?
+  $BLOCKCHAIN.compute_balances.map do |pub_key, balance|
+    "#{human_readable_names(pub_key).yellow} currently has a balance of #{balance}"
+  end.join("\n")
+end
 
-    if [movie, version_number].any?(&:nil?) # if either the movie or version number is nil, the port in the STATE hash will be assigned nil
-      STATE[port] ||= nil
-    else
-      STATE[port] = [STATE[port], [movie, version_number]].compact.max_by(&:last)
-    end
-  end
+def render_state
+  system 'clear'
+  puts Time.now.to_s.split[1].light_blue
+  puts "My blockchain: " + $BLOCKCHAIN.to_s
+  puts "Blockchain length: " + ($BLOCKCHAIN || []).length
+  puts "PORT: #{PORT}"
+  puts "My name: " + human_readable_names(PUB_KEY).red
+  puts "My peers: " + $PEERS.sort.join(', ').to_s.green
+  puts readable_balances
+end
+
+def gossip_with_peer(port)
+  gossip_response = Client.gossip(port, YAML.dump($PEERS), YAML.dump($BLOCKCHAIN))
+  parsed_response = YAML.load(gossip_response)
+  their_peers = parsed_response['peers']
+  their_blockchain = parsed_response['blockchain']
+
+  update_peers(their_peers)
+  update_blockchain(their_blockchain)
+rescue Faraday::ConnectionFailed => e # keep connection and server up if a peer disconnects
+  $PEERS.delete(port)
+end
+
+def update_blockchain(their_blockchain)
+  return if their_blockchain.nil? # if you don't have a blockchian screw you
+  return if $BLOCKCHAIN && their_blockchain.length <= $BLOCKCHAIN.length # fork choice rule: if their blockchain is shorter than mine, then it is an older version of the blockchain, and possibly corrupted
+  return unless their_blockchain.valid? # must check to see that their blockchain is valid. Never trust that they are valid, until you are able to validate their blockchain.
+
+  $BLOCKCHAIN = their_blockchain # if all parameters are met, then their blockchain is your blockchian.
+end
+
+def update_peers(their_peers)
+  $PEERS = ($PEERS + their_peers).uniq #updating the peers of peers by making my peers equal to theirs plus mine, then uniqed
 end
