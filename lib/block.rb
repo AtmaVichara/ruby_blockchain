@@ -134,9 +134,3 @@ class BlockChain
     @blocks.map(&:to_s).join("\n")
   end
 end
-
-b = BlockChain.new('----Genesis Block----')
-b.add_to_chain('What it do')
-b.add_to_chain('JOIN US')
-b.add_to_chain('And another msg')
-puts b.valid?
