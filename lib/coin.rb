@@ -1,38 +1,18 @@
 require 'colorize'
 require 'sinatra'
+require 'yaml'
+require_relative '../lib/block'
+require_relative '../lib/client'
+require_relative '../lib/helpers'
+require_relative '../lib/pki'
 
-BALANCES = {
-  'joe' => 1_000_000,
-}
+PORT, PEER_PORT = ARGV.first(2)
+set :port, PORT
 
-def print_balance
-  puts BALANCES.to_s.yellow
-end
+$PEERS = ThreadSafe::Array.new([PORT])
 
-# @param user
-get "/balance" do
-  user = params['user'].downcase
-  print_balance
-  "#{user} has #{BALANCES[user]}"
-end
+PRIV_KEY, PUB_KEY = PKI.generate_key_pair
 
-# @param name
-post "/users" do
-  name = params['name'].downcase
-  BALANCES[name] ||= 0
-  print_balance
-  "OK"
-end
-
-# @param from
-# @param to
-# @param amount
-post "/transfers" do
-  from, to = params.values_at('from', 'to').map(&:downcase)
-  amount = params['amount'].to_i
-  raise unless BALANCES[from] >= amount
-  BALANCES[from] -= amount
-  BALANCES[to] += amount
-  print_balance
-  'OK'
-end
+if PEER_PORT.nil?
+  # you are the progenitor
+  $BLOCKCHAIN = 
