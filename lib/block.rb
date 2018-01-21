@@ -7,16 +7,16 @@ class Block
 
   attr_reader :transaction, :previous_block_hash, :block_hash
 
+  def self.create_genesis_block(pub_key, priv_key)
+    genesis_txn = Transaction.new(nil, pub_key, 500_000, priv_key)
+    Block.new(nil, genesis_txn)
+  end
+
   def initialize(previous_block, transaction)
     raise TypeError unless transaction.is_a?(Transacation)
     @transaction = transaction
     @previous_block_hash = previous_block.block_hash if previous_block
     mine_block!
-  end
-
-  def self.create_genesis_block(pub_key, priv_key)
-    genesis_txn = Transaction.new(nil, pub_key, 500_000, priv_key)
-    Block.new(nil, genesis_txn)
   end
 
   def mine_block!
