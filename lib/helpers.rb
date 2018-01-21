@@ -49,13 +49,13 @@ rescue Faraday::ConnectionFailed => e # keep connection and server up if a peer 
 end
 
 def update_blockchain(their_blockchain)
-  return if their_blockchain.nil?
-  return if $BLOCKCHAIN && their_blockchain.length <= $BLOCKCHAIN.length
-  return unless their_blockchain.valid?
+  return if their_blockchain.nil? # if you don't have a blockchian screw you
+  return if $BLOCKCHAIN && their_blockchain.length <= $BLOCKCHAIN.length # fork choice rule: if their blockchain is shorter than mine, then it is an older version of the blockchain, and possibly corrupted
+  return unless their_blockchain.valid? # must check to see that their blockchain is valid. Never trust that they are valid, until you are able to validate their blockchain.
 
-  $BLOCKCHAIN = their_blockchain
+  $BLOCKCHAIN = their_blockchain # if all parameters are met, then their blockchain is your blockchian.
 end
 
 def update_peers(their_peers)
-  $PEERS = ($PEERS + their_peers).uniq
+  $PEERS = ($PEERS + their_peers).uniq #updating the peers of peers by making my peers equal to theirs plus mine, then uniqed
 end
