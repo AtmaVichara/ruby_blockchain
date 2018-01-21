@@ -13,7 +13,7 @@ class Block
   end
 
   def initialize(previous_block, transaction)
-    raise TypeError unless transaction.is_a?(Transacation) # edgecase to determine that a transaction is a class of Transaction
+    raise TypeError unless transaction.is_a?(Transaction) # edgecase to determine that a transaction is a class of Transaction
     @transaction = transaction
     @previous_block_hash = previous_block.block_hash if previous_block
     mine_block! # upon initialization, mine the blocks
@@ -88,7 +88,7 @@ end
 class BlockChain
   attr_reader :blocks
 
-  def initialize(transaction)
+  def initialize(originator_pub_key, originator_priv_key)
     @blocks = []
     @blocks << Block.create_genesis_block(originator_pub_key, originator_priv_key)
   end

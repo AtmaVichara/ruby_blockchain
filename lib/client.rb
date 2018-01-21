@@ -6,7 +6,7 @@ class Client
   def self.gossip(port, peers, blockchain)
     begin
       Faraday.post("#{URL}:#{port}/gossip", peers: peers, blockchain: blockchain).body
-    rescue Faraday.ConnectionFailed => e
+    rescue Faraday::ConnectionFailed => e
       raise
     end
   end

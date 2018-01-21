@@ -1,5 +1,6 @@
 require 'colorize'
 require 'sinatra'
+require 'active_support/time'
 require 'yaml'
 require_relative '../lib/block'
 require_relative '../lib/client'
@@ -41,13 +42,13 @@ post '/gossip' do # recieve peers gossip, and return your gossip with their goss
   their_peers = YAML.load(params['peers'])
   update_blockchain(their_blockchain)
   update_peers(their_peers)
-  YAML.dump('peers' => $PEERS, 'blockchain' = $BLOCKCHAIN)
+  YAML.dump('peers' => $PEERS, 'blockchain' => $BLOCKCHAIN)
 end
 
 # @params to (port_number)
 # @params amount
 post '/send_money' do
-  to = Client.get_pub_key(params['to'])
+  to = Client.get_pub_key(params['to']) # get peers pub_key
   amount = params['amount'].to_i
   $BLOCKCHAIN.add_to_chain(Transaction.new(PUB_KEY, to, amount, PRIV_KEY))
   'OK BLOCK IS MINED!!!! XD'.green
