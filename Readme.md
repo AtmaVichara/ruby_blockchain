@@ -12,4 +12,5 @@
 * At the moment, the current issues are further implementations that have yet to be added. More research and study must be conducted before I am able to do so.
 
 #### Sources
-* Main source of instruction is https://github.com/Haseeb-Qureshi/lets-build-a-blockchain
+* Main learning resource: https://github.com/Haseeb-Qureshi/lets-build-a-blockchain
+* Merkle learning resource: https://blog.ethereum.org/2015/11/15/merkling-in-ethereum/
